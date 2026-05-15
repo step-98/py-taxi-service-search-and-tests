@@ -91,6 +91,13 @@ class PrivateCarTests(TestCase):
         self.client.post(url)
         self.assertFalse(car.drivers.filter(id=self.driver.id).exists())
 
+    def test_search_car(self):
+        Car.objects.create(model="X3", manufacturer=self.manufacturer)
+        Car.objects.create(model="X5", manufacturer=self.manufacturer)
+        response = self.client.get(CAR_URL, {"model": "X5"})
+        self.assertContains(response, "X5")
+        self.assertNotContains(response, "X3")
+
 
 class PrivateDriverTests(TestCase):
     def setUp(self):
@@ -119,3 +126,18 @@ class PrivateDriverTests(TestCase):
 
         self.assertEqual(new_driver.first_name, "Test first")
         self.assertEqual(new_driver.last_name, "Test last")
+
+    def test_search_driver(self):
+        get_user_model().objects.create_user(
+            username="Bob",
+            password="test123",
+            license_number="ABC12347",
+        )
+        get_user_model().objects.create_user(
+            username="user",
+            password="test123",
+            license_number="ABC12346",
+        )
+        response = self.client.get(DRIVER_URL, {"username": "user"})
+        self.assertContains(response, "user")
+        self.assertNotContains(response, "Bob")
